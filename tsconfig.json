@@ -1,0 +1,25 @@
+{
+	"compilerOptions": {
+		//! TypeScript paths shorthand
+		"paths": {
+			"express": ["./node_modules/@types/express"],
+			"@generated/*": ["./generated/*"],
+			"@interfaces/*": ["../interfaces/*"],
+			"@errors/*": ["./src/errors/*"],
+			"@lib/*": ["./src/lib/*"],
+			"@middleware/*": ["./src/middleware/*"],
+			"@routes/*": ["./src/routes/*"],
+			"@utils/*": ["./src/utils/*"]
+		},
+
+		"types": ["node", "jest"],
+
+		//! Required by Prisma
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"target": "es2025",
+		"strict": true,
+		"esModuleInterop": true,
+		"ignoreDeprecations": "6.0"
+	}
+}

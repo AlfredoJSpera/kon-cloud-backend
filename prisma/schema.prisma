@@ -1,0 +1,111 @@
+// https://www.prisma.io/docs/orm/prisma-schema/overview/generators
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+  previewFeatures = ["partialIndexes"]
+}
+
+// https://www.prisma.io/docs/orm/prisma-schema/overview/data-sources
+datasource db {
+  provider = "sqlserver"
+}
+
+// https://www.prisma.io/docs/orm/prisma-schema/data-model/models
+model Administrator {
+  AdministratorID  String        @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  EntraID_ObjectID String?       @db.NVarChar(255)
+  FirstName        String        @db.NVarChar(100)
+  LastName         String        @db.NVarChar(100)
+  Email            String        @unique @db.NVarChar(255)
+  PasswordHash     String?       @db.NVarChar(255)
+  RegistrationDate DateTime      @default(now()) @db.DateTime2
+  Condominiums     Condominium[]
+
+  // Partial index so that EntraID_ObjectID can be null on different rows
+  @@unique([EntraID_ObjectID], where: raw("EntraID_ObjectID IS NOT NULL"))
+}
+
+model Condominium {
+  CondominiumID   Int           @id @default(autoincrement())
+  AdministratorID String        @db.UniqueIdentifier
+  Name            String        @db.NVarChar(150)
+  Address         String?       @db.NVarChar(255)
+  Administrator   Administrator @relation(fields: [AdministratorID], references: [AdministratorID], onDelete: Cascade)
+  Tenants         Tenant[]
+  Expenses        Expense[]
+  @@index([AdministratorID])
+}
+
+model Tenant {
+  TenantID         Int         @id @default(autoincrement())
+  CondominiumID    Int
+  FirstName        String      @db.NVarChar(100)
+  LastName         String      @db.NVarChar(100)
+  Email            String?     @db.NVarChar(255)
+  Phone            String?     @db.NVarChar(50)
+  ApartmentNumber  String      @db.NVarChar(150)
+  RegistrationDate DateTime    @default(now()) @db.DateTime2
+  Condominium      Condominium @relation(fields: [CondominiumID], references: [CondominiumID], onDelete: Cascade)
+
+  Dues             Due[]
+  Payments         Payment[]
+
+  @@index([CondominiumID])
+}
+
+model Due {
+  DueID     Int       @id @default(autoincrement())
+  TenantID  Int
+  Amount    Decimal   @db.Decimal(18, 2)
+  Reason    String    @db.NVarChar(255)
+  CreatedAt DateTime  @default(now()) @db.DateTime2
+  Tenant    Tenant    @relation(fields: [TenantID], references: [TenantID], onDelete: Cascade)
+  Payments  Payment[]
+
+  @@index([TenantID])
+}
+
+model Payment {
+  PaymentID   Int      @id @default(autoincrement())
+  TenantID    Int
+  DueID       Int?
+  Amount      Decimal  @db.Decimal(18, 2)
+  PaymentDate DateTime @default(now()) @db.DateTime2
+  Notes       String?  @db.NVarChar(255)
+  Tenant      Tenant   @relation(fields: [TenantID], references: [TenantID], onDelete: NoAction, onUpdate: NoAction)
+  Due         Due?     @relation(fields: [DueID], references: [DueID], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([TenantID])
+  @@index([DueID])
+}
+
+model Expense {
+  ExpenseID     Int                 @id @default(autoincrement())
+  CondominiumID Int
+  Category      String              @db.NVarChar(50)
+  Amount        Decimal             @db.Decimal(18, 2)
+  Description   String?             @db.NVarChar(255)
+  ExpenseDate   DateTime            @default(now()) @db.DateTime2
+  CreatedAt     DateTime            @default(now()) @db.DateTime2
+  Condominium   Condominium         @relation(fields: [CondominiumID], references: [CondominiumID], onDelete: Cascade)
+  Attachments   ExpenseAttachment[]
+
+  @@index([CondominiumID])
+}
+
+model ExpenseAttachment {
+  AttachmentID String   @id @default(dbgenerated("newid()")) @db.UniqueIdentifier
+  ExpenseID    Int
+  FileName     String   @db.NVarChar(255)
+  BlobName     String   @db.NVarChar(255)
+  FileSize     Int
+  MimeType     String   @db.NVarChar(100)
+  UploadedAt   DateTime @default(now()) @db.DateTime2
+  Expense      Expense  @relation(fields: [ExpenseID], references: [ExpenseID], onDelete: Cascade)
+
+  @@index([ExpenseID])
+}
+
+
+
+
